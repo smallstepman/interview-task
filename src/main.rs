@@ -8,30 +8,18 @@ mod ledger;
 
 use crate::core::{Accounts, Ledger, PaymentEngine, Tx};
 
-use clap::{self, Arg};
-use csv::Reader;
+use clap::{self, Arg, ArgMatches};
+use csv::{Reader, ReaderBuilder, Trim};
 use std::error::Error;
-use std::fs;
+use std::fs::File;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let data_source = clap::Command::new("interviewpuzzle")
-        .arg_required_else_help(true)
-        .arg(
-            Arg::new("csv-path")
-                .help("Path to csv file.")
-                .takes_value(true),
-        )
-        .get_matches()
-        .value_of("csv-path")
-        .unwrap();
+    let csv_path = input();
     let mut engine = PaymentEngine::default();
     let mut ledger = Ledger::default();
     let mut accounts = Accounts::default();
-    let csv = fs::read_to_string("tests/test_cases/in2.csv")
-        .unwrap()
-        .replace(" ", "");
-    let mut stream = Reader::from_reader(csv.as_bytes()); //= get_transaction_stream();
-    for tx in stream.deserialize() {
+    let mut transactions = get_transactions(csv_path.value_of("csv-path"))?;
+    for tx in transactions.deserialize() {
         let tx: Tx = tx?;
         engine
             .process_transaction(&tx, &mut ledger, &mut accounts)
@@ -41,6 +29,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     let csv_report = accounts.report_accounts_balances()?;
     output(csv_report);
     Ok(())
+}
+
+fn input() -> ArgMatches {
+    clap::Command::new("interviewpuzzle")
+        .arg_required_else_help(true)
+        .arg(
+            Arg::new("csv-path")
+                .help("Path to csv file.")
+                .takes_value(true),
+        )
+        .get_matches()
+}
+
+fn get_transactions(csv_path: Option<&str>) -> csv::Result<Reader<File>> {
+    let transactions = ReaderBuilder::new()
+        .trim(Trim::All)
+        .from_path(csv_path.unwrap())?;
+    Ok(transactions)
 }
 
 fn output(csv: String) {
