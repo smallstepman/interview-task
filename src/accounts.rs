@@ -1,3 +1,4 @@
+use crate::utils::build_custom_error;
 use csv::Writer;
 use serde::{
     ser::{SerializeStruct, Serializer},
@@ -106,20 +107,5 @@ impl Serialize for Client {
     }
 }
 
-#[derive(Debug)]
-struct NotEnoughFunds;
-impl Error for NotEnoughFunds {}
-impl fmt::Display for NotEnoughFunds {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Not enough funds in client's account.")
-    }
-}
-
-#[derive(Debug)]
-struct AccountLocked;
-impl Error for AccountLocked {}
-impl fmt::Display for AccountLocked {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Unable to modify locked account.")
-    }
-}
+build_custom_error!(NotEnoughFunds, "Not enough funds in client's account.");
+build_custom_error!(AccountLocked, "Unable to modify locked account.");

@@ -1,4 +1,5 @@
 use crate::core::ClientId;
+use crate::utils::build_custom_error;
 use serde::Deserialize;
 use std::{collections::HashMap, error::Error, fmt};
 
@@ -83,36 +84,15 @@ impl fmt::Display for Tx {
         )
     }
 }
-
-#[derive(Debug)]
-pub(crate) struct IrreversableTransaction;
-impl Error for IrreversableTransaction {}
-impl fmt::Display for IrreversableTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Attempted to chargeback a transaction which is currently not disputed."
-        )
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct UnresolvableTransaction;
-impl Error for UnresolvableTransaction {}
-impl fmt::Display for UnresolvableTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Attempted to resolve a transaction which is currently not disputed."
-        )
-    }
-}
-
-#[derive(Debug)]
-pub(crate) struct UndisputableTransaction;
-impl Error for UndisputableTransaction {}
-impl fmt::Display for UndisputableTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Withdrawal transaction cannot be disputed.")
-    }
-}
+build_custom_error!(
+    IrreversableTransaction,
+    "Attempted to chargeback a transaction which is currently not disputed."
+);
+build_custom_error!(
+    UnresolvableTransaction,
+    "Attempted to resolve a transaction which is currently not disputed."
+);
+build_custom_error!(
+    UndisputableTransaction,
+    "Withdrawal transaction cannot be disputed."
+);

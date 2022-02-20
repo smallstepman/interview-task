@@ -1,3 +1,5 @@
+mod utils; // importing as a first item to register the macro before everything else
+
 pub(crate) mod core;
 
 mod accounts;

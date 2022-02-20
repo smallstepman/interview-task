@@ -1,4 +1,5 @@
 use crate::core::{Accounts, Ledger, Tx, TxType};
+use crate::utils::build_custom_error;
 use std::{error::Error, fmt};
 
 #[derive(Default)]
@@ -56,23 +57,11 @@ impl PaymentEngine {
     }
 }
 
-#[derive(Debug)]
-struct DuplicateTransaction;
-impl Error for DuplicateTransaction {}
-impl fmt::Display for DuplicateTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "Deposit or Withdrawal transaction with the same ID already exists in the ledger."
-        )
-    }
-}
-
-#[derive(Debug)]
-struct NonExistingTransaction;
-impl Error for NonExistingTransaction {}
-impl fmt::Display for NonExistingTransaction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Attempted to postprocess a non existent transaction.")
-    }
-}
+build_custom_error!(
+    DuplicateTransaction,
+    "Deposit or Withdrawal transaction with the same ID already exists in the ledger."
+);
+build_custom_error!(
+    NonExistingTransaction,
+    "Attempted to postprocess a non existent transaction."
+);
