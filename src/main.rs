@@ -8,11 +8,22 @@ mod ledger;
 
 use crate::core::{Accounts, Ledger, PaymentEngine, Tx};
 
+use clap::{self, Arg};
 use csv::Reader;
 use std::error::Error;
 use std::fs;
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let data_source = clap::Command::new("interviewpuzzle")
+        .arg_required_else_help(true)
+        .arg(
+            Arg::new("csv-path")
+                .help("Path to csv file.")
+                .takes_value(true),
+        )
+        .get_matches()
+        .value_of("csv-path")
+        .unwrap();
     let mut engine = PaymentEngine::default();
     let mut ledger = Ledger::default();
     let mut accounts = Accounts::default();
