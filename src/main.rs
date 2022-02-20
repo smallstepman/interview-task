@@ -49,6 +49,6 @@ fn get_transactions(csv_path: Option<&str>) -> csv::Result<Reader<File>> {
     Ok(transactions)
 }
 
-fn output(csv: String) {
+fn output(csv: &str) {
     println!("{}", csv);
 }
