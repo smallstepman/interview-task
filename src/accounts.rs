@@ -1,5 +1,8 @@
 use csv::Writer;
-use serde::Serialize;
+use serde::{
+    ser::{SerializeStruct, Serializer},
+    Serialize,
+};
 use std::collections::HashMap;
 use std::{error::Error, fmt};
 
@@ -24,7 +27,7 @@ impl Accounts {
     }
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub(crate) struct Client {
     id: ClientId,
     locked: bool,
@@ -85,6 +88,21 @@ impl Client {
         } else {
             Err(NotEnoughFunds)
         }
+    }
+}
+
+impl Serialize for Client {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut s = serializer.serialize_struct("Client", 5)?;
+        s.serialize_field("cilent", &self.id)?;
+        s.serialize_field("available", &self.available)?;
+        s.serialize_field("held", &self.held)?;
+        s.serialize_field("total", &(&self.available + &self.held))?;
+        s.serialize_field("locked", &self.locked)?;
+        s.end()
     }
 }
 
