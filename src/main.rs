@@ -3,6 +3,7 @@ use csv::Writer;
 use serde::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::fs;
 use std::{error::Error, fmt};
 
@@ -11,73 +12,73 @@ type TransactionId = u32;
 
 #[derive(Debug)]
 struct NotEnoughFunds;
-
 impl Error for NotEnoughFunds {}
-
 impl fmt::Display for NotEnoughFunds {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(f, "Not enough funds in client's account.")
     }
 }
+
 #[derive(Debug)]
 struct AccountLocked;
-
 impl Error for AccountLocked {}
-
 impl fmt::Display for AccountLocked {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(f, "Unable to modify locked account.")
     }
 }
+
 #[derive(Debug)]
 struct DuplicateTransaction;
-
 impl Error for DuplicateTransaction {}
-
 impl fmt::Display for DuplicateTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(
+            f,
+            "Deposit or Withdrawal transaction with the same ID already exists in the ledger."
+        )
     }
 }
+
 #[derive(Debug)]
 struct NonExistingTransaction;
-
 impl Error for NonExistingTransaction {}
-
 impl fmt::Display for NonExistingTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(f, "Attempted to postprocess a non existent transaction.")
     }
 }
 
 #[derive(Debug)]
 struct IrreversableTransaction;
-
 impl Error for IrreversableTransaction {}
-
 impl fmt::Display for IrreversableTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(
+            f,
+            "Attempted to chargeback a transaction which is currently not disputed."
+        )
     }
 }
+
 #[derive(Debug)]
 struct UnresolvableTransaction;
-
 impl Error for UnresolvableTransaction {}
-
 impl fmt::Display for UnresolvableTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(
+            f,
+            "Attempted to resolve a transaction which is currently not disputed."
+        )
     }
 }
+
 #[derive(Debug)]
 struct UndisputableTransaction;
-
 impl Error for UndisputableTransaction {}
-
 impl fmt::Display for UndisputableTransaction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Oh no, something bad went down")
+        write!(f, "Withdrawal transaction cannot be disputed.")
     }
 }
 
@@ -175,6 +176,15 @@ struct Tx {
     tx_state: Option<TxState>, // optional
 }
 
+impl Display for Tx {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "type:{:?},client:{},tx:{},amount:{:?},state:{:?}",
+            self.tx_type, self.client_id, self.id, self.amount, self.tx_state
+        )
+    }
+}
 impl Tx {
     fn dispute(&mut self) -> Result<(), UndisputableTransaction> {
         if self.tx_type != TxType::Withdrawal
@@ -230,7 +240,6 @@ impl Ledger {
 struct Accounts(HashMap<ClientId, Client>);
 
 impl Accounts {
-    // fn get_client(&mut self, tx: &Tx) -> &mut Client {
     fn get_client(&mut self, id: ClientId) -> &mut Client {
         self.0.entry(id).or_insert(Client::new(id))
     }
@@ -250,7 +259,7 @@ struct PaymentEngine;
 impl PaymentEngine {
     pub fn process_transaction(
         &mut self,
-        tx: Tx,
+        tx: &Tx,
         ledger: &mut Ledger,
         clients: &mut Accounts,
     ) -> Result<(), Box<dyn Error>> {
@@ -308,9 +317,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .replace(" ", "");
     let mut stream = Reader::from_reader(csv.as_bytes()); //= get_transaction_stream();
     for tx in stream.deserialize() {
+        let tx: Tx = tx?;
         engine
-            .process_transaction(tx?, &mut ledger, &mut accounts)
-            .map_err(|e| eprintln!("{:?}\n", e))
+            .process_transaction(&tx, &mut ledger, &mut accounts)
+            .map_err(|e| eprintln!("{} (tx = {})", e.to_string(), &tx))
             .ok();
     }
     let csv_report = accounts.report_accounts_balances()?;
