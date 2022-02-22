@@ -35,7 +35,7 @@ enum TxState {
     Chargebacked,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 pub struct Tx {
     #[serde(alias = "type")]
     pub(crate) tx_type: TxType,
@@ -71,7 +71,7 @@ impl Tx {
         }
     }
     pub(crate) fn chargeback(&mut self) -> Result<(), IrreversableTransaction> {
-        if let Some(TxState::Disputed) = self.tx_state {
+        if Some(TxState::Disputed) == self.tx_state {
             self.tx_state = Some(TxState::Chargebacked);
             Ok(())
         } else {
@@ -109,3 +109,99 @@ build_custom_error!(
     UndisputableTransaction,
     "Withdrawal transaction cannot be disputed."
 );
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    impl Tx {
+        fn new(tx_type: TxType, amount: &str, tx_state: Option<TxState>) -> Tx {
+            Tx {
+                tx_type,
+                client_id: 1,
+                id: 1,
+                amount: Decimal::from_str_exact(amount).ok(),
+                tx_state,
+            }
+        }
+    }
+
+    #[test]
+    fn successful_tx_ledger_crud() {
+        let mut l = Ledger::default();
+        let t = Tx::new(TxType::Deposit, "100.02", None);
+        l.insert_transaction(&t);
+        assert!(l.0.contains_key(&t.id));
+        let crud_t = l.get_transaction(&t).unwrap().to_owned();
+        assert!(crud_t == t);
+    }
+
+    #[test]
+    fn successful_resolve_after_dispute() {
+        let mut t = Tx::new(TxType::Deposit, "100.02", None);
+        assert!(t.tx_state == None);
+        let op = t.dispute();
+        assert!(op.is_ok());
+        assert!(t.tx_state == Some(TxState::Disputed));
+        let op = t.resolve();
+        assert!(op.is_ok());
+        assert!(t.tx_state == Some(TxState::Resolved));
+    }
+
+    #[test]
+    fn successful_chargeback_after_dispute() {
+        let mut t = Tx::new(TxType::Deposit, "100.02", None);
+        assert!(t.tx_state == None);
+        let op = t.dispute();
+        assert!(op.is_ok());
+        assert!(t.tx_state == Some(TxState::Disputed));
+        let op = t.chargeback();
+        assert!(op.is_ok());
+        assert!(t.tx_state == Some(TxState::Chargebacked));
+    }
+
+    #[should_panic]
+    #[test]
+    fn failed_tx_ledger_crud() {
+        let mut l = Ledger::default();
+        let t = Tx::new(TxType::Deposit, "100.02", None);
+        l.get_transaction(&t).unwrap();
+    }
+
+    #[test]
+    fn failed_chargeback_after_resolve() {
+        let mut t = Tx::new(TxType::Deposit, "100.02", None);
+        assert!(t.tx_state == None);
+        let op = t.dispute();
+        assert!(op.is_ok());
+        assert!(t.tx_state == Some(TxState::Disputed));
+        let op = t.chargeback();
+        assert!(op.is_ok());
+        assert!(t.tx_state == Some(TxState::Chargebacked));
+    }
+
+    #[should_panic]
+    #[test]
+    fn failed_double_dispute() {
+        let mut t = Tx::new(TxType::Deposit, "100.02", None);
+        assert!(t.dispute().is_ok());
+        t.dispute().unwrap();
+    }
+
+    #[should_panic]
+    #[test]
+    fn failed_double_resolve() {
+        let mut t = Tx::new(TxType::Deposit, "100.02", None);
+        assert!(t.resolve().is_ok());
+        t.resolve().unwrap();
+    }
+
+    #[should_panic]
+    #[test]
+    fn failed_double_chargeback() {
+        let mut t = Tx::new(TxType::Deposit, "100.02", None);
+        assert!(t.chargeback().is_ok());
+        t.chargeback().unwrap();
+    }
+}
