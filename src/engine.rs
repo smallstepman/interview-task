@@ -65,3 +65,12 @@ build_custom_error!(
     NonExistingTransaction,
     "Attempted to postprocess a non existent transaction."
 );
+
+#[cfg(test)]
+mod tests {
+    #[should_panic]
+    #[test]
+    fn test() {
+        todo!()
+    }
+}
