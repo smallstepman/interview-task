@@ -5,31 +5,41 @@ This markdown document is used to build test cases for the
 block marked with ` ```colsole ` will be automatically
 converted into test case by [trycmd](https://crates.io/crates/trycmd).
 Test cases are written using following template:
-````
+
+```console ignore
 $ <binary-name> <input-parameter>
 ? <status>
 <output>
 <mandatory-newline>
-````
-- `<binary-name>` in our case its `interviewpuzzle`
-- This binary will get run using parameter in `$ interviewpuzzle <input-parameter>` (which will get propagated to `clap` for parsing).
+```
+- `<binary-name>` here its `interviewpuzzle`
+- The binary will get run with parameter `$ interviewpuzzle <input-parameter>` (which will later get propagated to `clap` for parsing).
 - The `<output>` of running above command, will get compared against the <output>.
   - `stderr` gets printed first, followed by `stdout`
 - (optional) The line `? <status>` will check against exit code of the processed binary.
 - `<mandatory-newline>`, hopefully self-explanatory
 
 Checkout [trycmd](https://docs.rs/trycmd/latest/trycmd/#trycmd) docs to learn more.
-Unfortunatelly, naming each test case has not yet been implemented by upstream package ([issue #25](https://github.com/assert-rs/trycmd/issues/25)).
-In reallity, I'd just split the test into separate files, and name the files accordingly,
-but I'm keeping them bundled for the reader's convenience.
+Unfortunatelly, naming each test case has not yet been implemented by upstream package ([issue #25](https://github.com/assert-rs/trycmd/issues/25)), therefore the output of `cargo test` will look like this:
+
+```ignore
+running 1 test
+Testing tests/README.md:35 ... ok
+Testing tests/README.md:58 ... ok
+Testing tests/README.md:70 ... ok
+Testing tests/README.md:79 ... ok
+...
+```
+
+In reallity, I'd walk around this issue by splitting this test file into many separate files, and name the files accordingly, but I'm keeping them bundled for the reader's convenience.
 
 Below you can find all test cases.
 
 ## Test cases
 
 ### No input
-
-Checking if it fails gracefully when no input is provided.
+This tests for:
+- failing gracefully when no input is provided
 
 ```console
 $ interviewpuzzle 
@@ -49,7 +59,7 @@ OPTIONS:
 
 ### Basic example (`#01`)
 Using an example from PDF file with task description.
-This for tests:
+This tests for:
 - creating new client
 - successful deposits
 - successful withdrawals
@@ -64,8 +74,9 @@ client,available,held,total,locked
 ```
 
 ### Don't create new client (`#02`)
-See if executing bunch of `Disputes`, `Resolves` and `Chargebacks` agains uninitialized client account
-will create new client account (it shouldn't). 
+This tests for:
+- executing transaction type: `dispute|resolve|chargeback` against uninitialized client account
+should not create new client account 
 ```console
 $ interviewpuzzle tests/test_cases/02-dont-create-new-client.csv
 ERROR: Attempted to postprocess a non existent transaction. (tx = type:Dispute,client:1,tx:1,amount:None,state:None)
@@ -75,6 +86,10 @@ ERROR: Attempted to postprocess a non existent transaction. (tx = type:Chargebac
 ```
 
 ### Handling of malformed or non-compatible input (`#03`)
+This tests for:
+- malfored header in input file
+- malfored content in input file
+- non-csv input file
 ```console
 $ interviewpuzzle tests/test_cases/03-malformed-header.csv
 ? failed
@@ -97,6 +112,9 @@ Error: Error(Deserialize { pos: Some(Position { byte: 2, line: 2, record: 1 }), 
 ```
 
 ### Display decimals with correct precision (`#04`)
+This tests for:
+- correctness of floating-point operations
+- output decimals formatted with 4-digit precision
 ```console 
 $ interviewpuzzle tests/test_cases/04-decimal-percision.csv
 client,available,held,total,locked
@@ -104,3 +122,6 @@ client,available,held,total,locked
 2,4.0400,0.0,4.0400,false
 
 ```
+
+### Display decimals with correct precision (`#05`)
+This tests for:
