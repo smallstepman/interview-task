@@ -157,3 +157,11 @@ client,available,held,total,locked
 1,4.0,0.0,4.0,false
 
 ```
+
+### Happy path (`#07`)
+```console 
+$ interviewpuzzle tests/test_cases/07-happy-path.csv
+client,available,held,total,locked
+1,4.01,4.0,8.01,false
+
+```
