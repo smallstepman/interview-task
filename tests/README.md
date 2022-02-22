@@ -11,12 +11,12 @@ $ <binary-name> <input-parameter>
 <output>
 <mandatory-newline>
 ````
-- <binary-name>, in our case its `interviewpuzzle`
+- `<binary-name>` in our case its `interviewpuzzle`
 - This binary will get run using parameter in `$ interviewpuzzle <input-parameter>` (which will get propagated to `clap` for parsing).
-- The output of running above command, will get compared against the <output>.
+- The `<output>` of running above command, will get compared against the <output>.
   - `stderr` gets printed first, followed by `stdout`
 - (optional) The line `? <status>` will check against exit code of the processed binary.
-- <mandatory-newline>, hopefully self-explanatory
+- `<mandatory-newline>`, hopefully self-explanatory
 
 Checkout [trycmd](https://docs.rs/trycmd/latest/trycmd/#trycmd) docs to learn more.
 Unfortunatelly, naming each test case has not yet been implemented by upstream package ([issue #25](https://github.com/assert-rs/trycmd/issues/25)).
