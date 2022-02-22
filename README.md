@@ -15,8 +15,7 @@ cargo test
 - `serde` - well, serialization and deserialization
 - `trycmd` - integration test cases self-documented in a markdown file: [./tests/README.md](./tests/README.md)
 
-## Other
-I've figured you're most likely intersted in seeing whether I can write idiomatic, correct and performant Rust, while keeping tidy Git log. With that idea in mind, I missed out on some things (either purposely, or due to lack of time):
+## Missed out on some things 
 - 100% test-coverage
 - deep analysis and correct implementation of all business use cases and edge cases
 - typestate pattern
