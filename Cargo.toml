@@ -10,3 +10,4 @@ clap = "3.1.0"
 csv = "1.1.6"
 rust_decimal = "1.22.0"
 serde = { version = "1.0.136", features = ["derive"] }
+trycmd = "0.12.2"
