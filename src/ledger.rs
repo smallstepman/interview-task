@@ -42,8 +42,20 @@ pub struct Tx {
     pub(crate) client_id: ClientId,
     #[serde(alias = "tx")]
     id: TransactionId,
-    pub(crate) amount: Option<f32>,
+    #[serde(deserialize_with = "deserialize_decimal")]
+    pub(crate) amount: Option<Decimal>,
     tx_state: Option<TxState>,
+}
+
+fn deserialize_decimal<'de, D>(deserializer: D) -> Result<Option<Decimal>, D::Error>
+where
+    D: de::Deserializer<'de>,
+{
+    let s: &str = de::Deserialize::deserialize(deserializer)?;
+    match Decimal::from_str_exact(s) {
+        Ok(v) => Ok(Some(v)),
+        Err(_) => Ok(None),
+    }
 }
 
 impl Tx {

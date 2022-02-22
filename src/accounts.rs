@@ -1,5 +1,6 @@
 use crate::utils::build_custom_error;
 use csv::Writer;
+use rust_decimal::Decimal;
 use serde::{
     ser::{SerializeStruct, Serializer},
     Serialize,
@@ -32,8 +33,8 @@ impl Accounts {
 pub(crate) struct Client {
     id: ClientId,
     locked: bool,
-    available: f32,
-    held: f32,
+    available: Decimal,
+    held: Decimal,
 }
 
 impl Client {
@@ -41,38 +42,38 @@ impl Client {
         Client {
             id,
             locked: false,
-            available: 0.0,
-            held: 0.0,
+            available: Decimal::new(0, 4),
+            held: Decimal::new(0, 4),
         }
     }
     pub(crate) fn freeze(&mut self) {
         self.locked = true;
     }
-    pub(crate) fn deposit(&mut self, amount: f32) -> ClientActionResult {
+    pub(crate) fn deposit(&mut self, amount: Decimal) -> ClientActionResult {
         self.is_unlocked()?;
         self.available += amount;
         Ok(())
     }
-    pub(crate) fn withdrawal(&mut self, amount: f32) -> ClientActionResult {
+    pub(crate) fn withdrawal(&mut self, amount: Decimal) -> ClientActionResult {
         self.is_unlocked()?;
         self.has_enough_funds(amount)?;
         self.available -= amount;
         Ok(())
     }
-    pub(crate) fn hold(&mut self, amount: f32) -> ClientActionResult {
+    pub(crate) fn hold(&mut self, amount: Decimal) -> ClientActionResult {
         self.is_unlocked()?;
         self.has_enough_funds(amount)?;
         self.available -= amount;
         self.held += amount;
         Ok(())
     }
-    pub(crate) fn resolve(&mut self, amount: f32) -> ClientActionResult {
+    pub(crate) fn resolve(&mut self, amount: Decimal) -> ClientActionResult {
         self.is_unlocked()?;
         self.held -= amount;
         self.available += amount;
         Ok(())
     }
-    pub(crate) fn chargeback(&mut self, amount: f32) -> ClientActionResult {
+    pub(crate) fn chargeback(&mut self, amount: Decimal) -> ClientActionResult {
         self.held -= amount;
         Ok(())
     }
@@ -83,12 +84,15 @@ impl Client {
             Err(AccountLocked)
         }
     }
-    fn has_enough_funds(&mut self, amount: f32) -> Result<(), NotEnoughFunds> {
+    fn has_enough_funds(&mut self, amount: Decimal) -> Result<(), NotEnoughFunds> {
         if self.available >= amount {
             Ok(())
         } else {
             Err(NotEnoughFunds)
         }
+    }
+    fn calculate_total(&self) -> Decimal {
+        self.held + self.available
     }
 }
 
@@ -97,11 +101,20 @@ impl Serialize for Client {
     where
         S: Serializer,
     {
+        let round = |d: Decimal| {
+            let mut normalized = d.normalize();
+            if normalized.scale() == 0 {
+                normalized.rescale(1);
+            } else if normalized.scale() > 4 {
+                normalized = normalized.round_dp(4);
+            }
+            normalized
+        };
         let mut s = serializer.serialize_struct("Client", 5)?;
-        s.serialize_field("cilent", &self.id)?;
-        s.serialize_field("available", &self.available)?;
-        s.serialize_field("held", &self.held)?;
-        s.serialize_field("total", &(&self.available + &self.held))?;
+        s.serialize_field("client", &self.id)?;
+        s.serialize_field("available", &round(self.available))?;
+        s.serialize_field("held", &round(self.held))?;
+        s.serialize_field("total", &round(self.calculate_total()))?;
         s.serialize_field("locked", &self.locked)?;
         s.end()
     }
