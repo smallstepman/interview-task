@@ -90,6 +90,7 @@ This tests for:
 - malfored header in input file
 - malfored content in input file
 - non-csv input file
+- non-existent file
 ```console
 $ interviewpuzzle tests/test_cases/03-malformed-header.csv
 ? failed
@@ -111,6 +112,13 @@ Error: Error(Deserialize { pos: Some(Position { byte: 2, line: 2, record: 1 }), 
 
 ```
 
+```console
+$ interviewpuzzle tests/test_cases/03-you-cant-find-me.csv
+? failed
+Error: Error(Io(Os { code: 2, kind: NotFound, message: "No such file or directory" }))
+
+```
+
 ### Display decimals with correct precision (`#04`)
 This tests for:
 - correctness of floating-point operations
@@ -123,5 +131,29 @@ client,available,held,total,locked
 
 ```
 
-### Display decimals with correct precision (`#05`)
+### Invalid chargeback request (`#05`)
 This tests for:
+- *chargeback* happens only when transaction is *disputed*
+
+```console 
+$ interviewpuzzle tests/test_cases/05-invalid-chargeback.csv
+ERROR: Attempted to chargeback a transaction which is currently not disputed. (tx = type:Chargeback,client:1,tx:1,amount:None,state:None)
+ERROR: Attempted to chargeback a transaction which is currently not disputed. (tx = type:Chargeback,client:2,tx:2,amount:None,state:None)
+client,available,held,total,locked
+1,4.0,0.0,4.0,false
+2,4.0,0.0,4.0,false
+
+```
+
+### Non-unique transaction IDs (`#06`)
+This tests for:
+- refusing to accept `withdrawal|deposit` transactions with non-unique IDs
+
+```console 
+$ interviewpuzzle tests/test_cases/06-duplicate-transaction-id.csv
+ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger. (tx = type:Deposit,client:1,tx:1,amount:Some(4.0),state:None)
+ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger. (tx = type:Withdrawal,client:1,tx:1,amount:Some(4.0),state:None)
+client,available,held,total,locked
+1,4.0,0.0,4.0,false
+
+```

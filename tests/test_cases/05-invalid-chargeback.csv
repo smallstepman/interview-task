@@ -3,5 +3,5 @@ deposit, 1, 1, 4.0
 dispute, 1, 1,
 resolve, 1, 1,
 chargeback, 1, 1,
-deposit, 1, 1, 4.0
-withdrawal, 1, 1, 4.0
+deposit, 2, 2, 4.0
+chargeback, 2, 2,
