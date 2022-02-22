@@ -13,7 +13,7 @@ cargo test
 - `csv` - csv parsing and building
 - `rust_decimal` - never handle money data with floats
 - `serde` - well, serialization and deserialization
-- `trycmd` - integration test cases self-documented in a markdown file
+- `trycmd` - integration test cases self-documented in a markdown file: [./tests/README.md](./tests/README.md)
 
 ## Other
 I've figured you're most likely intersted in seeing whether I can write idiomatic, correct and performant Rust, while keeping tidy Git log. With that idea in mind, I missed out on some things (either purposely, or due to lack of time):
