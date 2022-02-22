@@ -2,7 +2,7 @@
 
 This markdown document is used to build test cases for the
 `interviewpuzzle` binary (name of the project). Each code
-block marked with !``! ```colsole !``! will be automatically
+block marked with ` ```colsole ` will be automatically
 converted into test case by [trycmd](https://crates.io/crates/trycmd).
 Test cases are written using following template:
 ````
