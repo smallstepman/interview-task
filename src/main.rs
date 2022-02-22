@@ -23,11 +23,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         let tx: Tx = tx?;
         engine
             .process_transaction(&tx, &mut ledger, &mut accounts)
-            .map_err(|e| eprintln!("{} (tx = {})", e.to_string(), &tx))
+            .map_err(|e| eprintln!("ERROR: {} (tx = {})", e.to_string(), &tx))
             .ok();
     }
     let csv_report = accounts.report_accounts_balances()?;
-    output(csv_report);
+    output(&csv_report);
     Ok(())
 }
 
@@ -50,5 +50,5 @@ fn get_transactions(csv_path: Option<&str>) -> csv::Result<Reader<File>> {
 }
 
 fn output(csv: &str) {
-    println!("{}", csv);
+    print!("{}", csv);
 }

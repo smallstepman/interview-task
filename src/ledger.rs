@@ -1,6 +1,7 @@
 use crate::core::ClientId;
 use crate::utils::build_custom_error;
-use serde::Deserialize;
+use rust_decimal::prelude::*;
+use serde::{de, Deserialize};
 use std::{collections::HashMap, error::Error, fmt};
 
 type TransactionId = u32;

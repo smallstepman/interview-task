@@ -5,8 +5,7 @@ use serde::{
     ser::{SerializeStruct, Serializer},
     Serialize,
 };
-use std::collections::HashMap;
-use std::{error::Error, fmt};
+use std::{collections::HashMap, error::Error, fmt};
 
 pub(crate) type ClientId = u16;
 type ClientActionResult = Result<(), Box<dyn Error>>;
