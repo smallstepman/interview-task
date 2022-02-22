@@ -22,3 +22,4 @@ I've figured you're most likely intersted in seeing whether I can write idiomati
 - typestate pattern
 - comments, and CI/CD'ing `cargo doc` output into GitHub Pages using GitHub Actions
 - creating issues, branches, PRs
+- beautiful error logs
