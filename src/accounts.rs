@@ -21,7 +21,15 @@ impl Accounts {
 
     pub fn report_accounts_balances(&self) -> Result<String, Box<dyn Error>> {
         let mut wtr = Writer::from_writer(vec![]);
-        for client in self.0.values() {
+        // Hashmap's hashing algorithm is randomly seeded.
+        // Here, we're collecting HashMap values into Vec, to then sort the clients
+        // based on their ID, because this ensures deterministic output of this function
+        // which in turn makes testing much easier as there is no need to account for
+        // all different output combinations of the same data. This affects performance,
+        // but given the purposes or this task, I'm happy to accept it.
+        let mut clients = self.0.values().collect::<Vec<_>>();
+        clients.sort_by_key(|c| c.id);
+        for client in clients {
             wtr.serialize(client)?;
         }
         let data = String::from_utf8(wtr.into_inner()?)?;
