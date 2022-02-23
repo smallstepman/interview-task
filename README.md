@@ -1,4 +1,5 @@
 # Payment Engine
+[<img alt="" src="https://img.shields.io/badge/docs-PaymentEngine-success?style=flat-square">](https://smallstepman.github.io/interview-task/interviewpuzzle/)
 ## Usage
 ### Run
 ```console
@@ -14,10 +15,10 @@ cargo test
 - `rust_decimal` - never handle money data with floats
 - `serde` - well, serialization and deserialization
 - `trycmd` - integration test cases self-documented in a markdown file: [./tests/README.md](./tests/README.md)
-- `typestate` - cool macro to skip on writing bunch of boilerplate code when using typestate pattern, and also, automatically provides [](awesome visualization of finite state machine it aids to produce)
+- `typestate` - cool macro to skip on writing bunch of boilerplate code when using typestate pattern, and also, automatically provides [https://smallstepman.github.io/interview-task/interviewpuzzle/ledger/transaction/index.html](awesome UML visualization of finite state machine it aids to produce)
 
 ## Unsafe stuff
-- incomplete featured enabled with a flag `#![feature(type_changing_struct_update)]` ([https://rust-lang.github.io/rfcs/2528-type-changing-struct-update-syntax.html](RFC2528)) enabled me to use  syntax for destructuring structs between each other in typestate context (ok to use in this toy project)
+- Nada
 
 ## Missed out on some things 
 - 100% test-coverage
