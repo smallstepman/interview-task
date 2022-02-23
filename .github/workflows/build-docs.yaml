@@ -22,11 +22,22 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: cargo doc 
-        run: cargo doc --document-private-items --open --no-deps
- 
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: rustfmt, rust-src
+
+      - name: Build Documentation
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all --no-deps
+
       - name: deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.2.5
         with:
           branch: gh-pages # The branch the action should deploy to.
-          folder: target/doc/interviewpuzzle # The folder the action should deploy.
+          folder: target/doc # The folder the action should deploy.
