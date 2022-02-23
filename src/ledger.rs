@@ -1,3 +1,5 @@
+//! Transactions and their storage
+
 use crate::core::ClientId;
 use crate::utils::build_custom_error;
 use rust_decimal::prelude::*;
@@ -9,21 +11,23 @@ use typestate::typestate;
 type TransactionId = u32;
 type BoxedTransaction = Box<dyn Any + 'static>;
 
+/// Storage for transactions. Holds mapping between transaction ID and the transaction itself
 #[derive(Default, Debug)]
 pub(crate) struct Ledger(HashMap<TransactionId, BoxedTransaction>);
 
 impl Ledger {
-    pub(crate) fn get_transaction<S: TxState>(
+    pub(crate) fn get_transaction_by_id(
         &mut self,
-        tx: &Tx<S>,
+        tx_id: TransactionId,
     ) -> Option<&mut BoxedTransaction> {
-        self.0.get_mut(&tx.id)
+        self.0.get_mut(&tx_id)
     }
     pub(crate) fn insert_transaction<S: 'static + TxState>(&mut self, tx: Tx<S>) {
         self.0.insert(tx.id, Box::new(tx));
     }
 }
 
+/// Transaction types
 #[derive(Deserialize, Debug, Clone, PartialEq, Copy)]
 #[serde(rename_all = "lowercase")]
 pub(crate) enum TxType {
@@ -38,6 +42,9 @@ pub(crate) enum TxType {
 pub(crate) mod transaction {
     use super::{de, fmt, ClientId, Decimal, Deserialize, TransactionId, TxType};
 
+    /// A single transaction.
+    /// This struct is used both for ser/deserializing by `sered`, and
+    /// by `typestate` crate to generate `<TxState>` for this struct.
     #[derive(Deserialize, Debug, Clone, PartialEq, Copy)]
     #[serde(default, deny_unknown_fields)]
     #[automaton]
@@ -52,12 +59,18 @@ pub(crate) mod transaction {
         pub(crate) amount: Option<Decimal>,
     }
 
+    /// Default transaction state assigned to transactions which
+    /// have been parsed. If trasaction is of type Withdrawal or Dispute,
+    /// and has never been *disputed*, it will remain in Defualt state
     #[state]
     #[derive(Deserialize, Debug, Clone, PartialEq, Copy)]
     pub(crate) struct Default;
+    /// Transaction state assigned to transactions which has been *disputed*
     #[state]
     #[derive(Deserialize, Debug, Clone, PartialEq, Copy)]
     pub(crate) struct Disputed;
+    /// Transaction state assigned to transactions after disputed transaction
+    /// has been *chargebacked* (returned)
     #[state]
     #[derive(Deserialize, Debug, Clone, PartialEq, Copy)]
     pub(crate) struct Chargebacked;
@@ -154,15 +167,15 @@ impl DisputedState for Tx<Disputed> {
 
 build_custom_error!(
     IrreversableTransaction,
-    "Attempted to chargeback a transaction which is currently not disputed."
+    "ERROR: Attempted to chargeback a transaction which is currently not disputed."
 );
 build_custom_error!(
     UnresolvableTransaction,
-    "Attempted to resolve a transaction which is currently not disputed."
+    "ERROR: Attempted to resolve a transaction which is currently not disputed."
 );
 build_custom_error!(
     UndisputableTransaction,
-    "Withdrawal transaction cannot be disputed."
+    "ERROR: Withdrawal transaction cannot be disputed."
 );
 
 #[cfg(test)]
@@ -173,11 +186,29 @@ mod tests {
     fn successful_tx_ledger_crud() {
         let mut l = Ledger::default();
         let t = Tx::<Default>::create();
-
+        let t = t.dispute();
         l.insert_transaction(t);
         assert!(l.0.contains_key(&t.id));
-        // let crud_t = l.get_transaction(&t).unwrap().to_owned();
-        // assert!(crud_t == t);
+        let crud_tx = l.get_transaction_by_id(t.id).unwrap();
+        if let Some(crud_tx) = crud_tx.downcast_ref::<Tx<Disputed>>() {
+            assert!(crud_tx.to_owned() == t);
+        } else {
+            assert!(false);
+        }
+    }
+
+    #[test]
+    fn insert_to_ledger_transactions_with_different_types() {
+        let mut l = Ledger::default();
+        let mut t = Tx::<Default>::create();
+        t.id = 11; // avoid key collision in HashMap
+        let t = t.dispute();
+        l.insert_transaction(t);
+        let t = Tx::<Default>::create();
+        let t = t.dispute();
+        let t = t.chargeback();
+        l.insert_transaction(t);
+        assert_eq!(l.0.values().len(), 2);
     }
 
     #[test]
@@ -205,17 +236,6 @@ mod tests {
     #[test]
     fn failed_tx_ledger_crud() {
         let mut l = Ledger::default();
-        let tx = Tx::<Default>::create();
-        l.get_transaction(&tx).unwrap();
-    }
-
-    #[test]
-    fn failed_chargeback_after_resolve() {
-        let tx = Tx::<Default>::create();
-        assert!(tx.state == Default);
-        let tx = tx.dispute();
-        assert!(tx.state == Disputed);
-        let tx = tx.chargeback();
-        assert!(tx.state == Chargebacked);
+        l.get_transaction_by_id(888).unwrap();
     }
 }

@@ -1,3 +1,5 @@
+//! Client's account and their storage
+
 use crate::utils::build_custom_error;
 use csv::Writer;
 use rust_decimal::Decimal;
@@ -10,6 +12,7 @@ use std::{collections::HashMap, error::Error, fmt};
 pub(crate) type ClientId = u16;
 type ClientResult = Result<(), Box<dyn Error>>;
 
+/// Storage for client's accounts. Maps between client ID and their account.
 #[derive(Default, Debug)]
 pub(crate) struct Accounts(HashMap<ClientId, Client>);
 
@@ -18,7 +21,8 @@ impl Accounts {
         self.0.entry(id).or_insert(Client::new(id))
     }
 
-    pub fn report_accounts_balances(&self) -> Result<String, Box<dyn Error>> {
+    /// Build csv report file, from all of the accounts
+    pub(crate) fn report_accounts_balances(&self) -> Result<String, Box<dyn Error>> {
         let mut wtr = Writer::from_writer(vec![]);
         // Hashmap's hashing algorithm is randomly seeded.
         // Here, we're collecting HashMap values into Vec, to then sort the clients
@@ -37,11 +41,12 @@ impl Accounts {
 }
 
 #[derive(Debug, Clone)]
+/// A single client's account
 pub(crate) struct Client {
     pub(crate) id: ClientId,
-    pub(crate) locked: bool,
-    pub(crate) available: Decimal,
-    pub(crate) held: Decimal,
+    locked: bool,
+    available: Decimal,
+    held: Decimal,
 }
 
 impl Client {
@@ -101,16 +106,17 @@ impl Client {
     fn calculate_total(&self) -> Decimal {
         self.held + self.available
     }
-}
-
-fn round(d: Decimal) -> Decimal {
-    let mut normalized = d.normalize();
-    if normalized.scale() == 0 {
-        normalized.rescale(1);
-    } else if normalized.scale() > 4 {
-        normalized = normalized.round_dp(4);
+    /// Round `rust_decimal` structs according to specification.
+    /// `0.0000001` -> `0.0`, `0` -> `0.0`, `0.010` -> `0.01`
+    fn round(d: Decimal) -> Decimal {
+        let mut normalized = d.normalize();
+        if normalized.scale() == 0 {
+            normalized.rescale(1);
+        } else if normalized.scale() > 4 {
+            normalized = normalized.round_dp(4);
+        }
+        normalized
     }
-    normalized
 }
 
 impl Serialize for Client {
@@ -120,16 +126,19 @@ impl Serialize for Client {
     {
         let mut s = serializer.serialize_struct("Client", 5)?;
         s.serialize_field("client", &self.id)?;
-        s.serialize_field("available", &round(self.available))?;
-        s.serialize_field("held", &round(self.held))?;
-        s.serialize_field("total", &round(self.calculate_total()))?;
+        s.serialize_field("available", &Self::round(self.available))?;
+        s.serialize_field("held", &Self::round(self.held))?;
+        s.serialize_field("total", &Self::round(self.calculate_total()))?;
         s.serialize_field("locked", &self.locked)?;
         s.end()
     }
 }
 
-build_custom_error!(NotEnoughFunds, "Not enough funds in client's account.");
-build_custom_error!(AccountLocked, "Unable to modify locked account.");
+build_custom_error!(
+    NotEnoughFunds,
+    "ERROR: Not enough funds in client's account."
+);
+build_custom_error!(AccountLocked, "ERROR: Unable to modify locked account.");
 
 #[cfg(test)]
 mod tests {
@@ -156,17 +165,17 @@ mod tests {
     fn correct_decimal_formatting() {
         let mut c = Client::new(123);
         c.available = Decimal::new(12322344, 5);
-        assert_eq!(round(c.available).to_string(), "123.2234");
+        assert_eq!(Client::round(c.available).to_string(), "123.2234");
         c.available = Decimal::new(12322344, 0);
-        assert_eq!(round(c.available).to_string(), "12322344.0");
+        assert_eq!(Client::round(c.available).to_string(), "12322344.0");
         c.available = Decimal::new(1440000000, 7);
-        assert_eq!(round(c.available).to_string(), "144.0");
+        assert_eq!(Client::round(c.available).to_string(), "144.0");
         c.available = Decimal::new(1440200000, 7);
-        assert_eq!(round(c.available).to_string(), "144.02");
+        assert_eq!(Client::round(c.available).to_string(), "144.02");
         c.available = Decimal::new(1440020000, 7);
-        assert_eq!(round(c.available).to_string(), "144.002");
+        assert_eq!(Client::round(c.available).to_string(), "144.002");
         c.available = Decimal::new(1440002001, 7);
-        assert_eq!(round(c.available).to_string(), "144.0002");
+        assert_eq!(Client::round(c.available).to_string(), "144.0002");
     }
 
     #[test]
@@ -174,7 +183,7 @@ mod tests {
         let mut c = Client::new(123);
         c.deposit(Decimal::new(123223412341243344, 14)).ok();
         c.deposit(Decimal::new(123223777700000007, 16)).ok();
-        assert_eq!(round(c.available).to_string(), "1244.5565");
+        assert_eq!(Client::round(c.available).to_string(), "1244.5565");
     }
 
     #[test]

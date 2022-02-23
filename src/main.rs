@@ -19,11 +19,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut ledger = Ledger::default();
     let mut accounts = Accounts::default();
     let mut transactions = get_transactions(csv_path.value_of("csv-path"))?;
-    for (_line, tx) in transactions.deserialize().enumerate() {
+    for tx in transactions.deserialize() {
         let tx: Tx<ledger::transaction::Default> = tx?;
         engine
             .process_transaction(tx, &mut ledger, &mut accounts)
-            .map_err(|e| eprintln!("ERROR: {} (tx = {})", e.to_string(), &tx))
+            .map_err(|e| eprintln!("{} (tx = {})", e.to_string(), &tx))
             .ok();
     }
     let csv_report = accounts.report_accounts_balances()?;
@@ -31,6 +31,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// `stdin`, parsed with `clap`
 fn input() -> ArgMatches {
     clap::Command::new("interviewpuzzle")
         .arg_required_else_help(true)
@@ -42,6 +43,8 @@ fn input() -> ArgMatches {
         .get_matches()
 }
 
+/// Returns a type with `.deserialized()` method attached to it, which produces
+/// an iterator of incoming transactions
 fn get_transactions(csv_path: Option<&str>) -> csv::Result<Reader<File>> {
     let transactions = ReaderBuilder::new()
         .trim(Trim::All)
@@ -49,6 +52,7 @@ fn get_transactions(csv_path: Option<&str>) -> csv::Result<Reader<File>> {
     Ok(transactions)
 }
 
+/// `stdout`, but with a prettier name
 fn output(csv: &str) {
     print!("{}", csv);
 }

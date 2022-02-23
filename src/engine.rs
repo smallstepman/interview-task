@@ -1,3 +1,5 @@
+//! Syncronous engine for payment proccessing
+
 use crate::core::{
     transaction::{self, Chargebacked, DefaultState, Disputed, DisputedState, Tx, TxState},
     Accounts, Ledger, TxType,
@@ -5,6 +7,7 @@ use crate::core::{
 use crate::utils::build_custom_error;
 use std::{any::Any, error::Error, fmt};
 
+/// Syncronous engine for payment proccessing
 #[derive(Default)]
 pub(crate) struct PaymentEngine;
 
@@ -17,7 +20,7 @@ impl PaymentEngine {
         ledger: &mut Ledger,
         clients: &mut Accounts,
     ) -> Result<(), Box<dyn Error>> {
-        if let Some(referenced_tx) = ledger.get_transaction(&incoming_tx) {
+        if let Some(referenced_tx) = ledger.get_transaction_by_id(incoming_tx.id) {
             if incoming_tx.tx_type == TxType::Deposit || incoming_tx.tx_type == TxType::Withdrawal {
                 return Err(Box::new(DuplicateTransaction));
             }
@@ -71,19 +74,19 @@ impl PaymentEngine {
 
 build_custom_error!(
     DuplicateTransaction,
-    "Deposit or Withdrawal transaction with the same ID already exists in the ledger."
+    "ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger."
 );
 build_custom_error!(
     NonExistingTransaction,
-    "Attempted to postprocess a non existent transaction."
+    "ERROR: Attempted to postprocess a non existent transaction."
 );
 build_custom_error!(
     ChargedbackTransacionError,
-    "Transaction has been chargedback - no further action is possible."
+    "ERROR: Transaction has been chargedback - no further action is possible."
 );
 build_custom_error!(
     InvalidRequestError,
-    "Transaction has been chargedback - no further action is possible."
+    "ERROR: Transaction has been chargedback - no further action is possible."
 );
 
 #[cfg(test)]

@@ -1,5 +1,8 @@
+//! Macro utils for building custom error types
+
 macro_rules! build_custom_error {
     ($err_name:ident, $err_msg:literal) => {
+        #[doc=$err_msg]
         #[derive(Debug)]
         pub(crate) struct $err_name;
         impl Error for $err_name {}
