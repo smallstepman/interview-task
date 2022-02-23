@@ -23,7 +23,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: cargo doc 
-      - run: cargo doc --document-private-items --open --no-deps
+        run: cargo doc --document-private-items --open --no-deps
  
       - name: deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.2.5
