@@ -38,10 +38,10 @@ impl Accounts {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Client {
-    id: ClientId,
-    locked: bool,
-    available: Decimal,
-    held: Decimal,
+    pub(crate) id: ClientId,
+    pub(crate) locked: bool,
+    pub(crate) available: Decimal,
+    pub(crate) held: Decimal,
 }
 
 impl Client {

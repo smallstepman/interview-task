@@ -66,7 +66,7 @@ This tests for:
 - unsuccessful withdrawals (not enough funds)
 ```console
 $ interviewpuzzle tests/test_cases/01-basic-example.csv
-ERROR: Not enough funds in client's account. (tx = type:Withdrawal,client:2,tx:5,amount:Some(3.0),state:None)
+ERROR: Not enough funds in client's account. (tx = type:Withdrawal,client:2,tx:5,amount:Some(3.0),state:DefaultState)
 client,available,held,total,locked
 1,1.5,0.0,1.5,false
 2,2.0,0.0,2.0,false
@@ -79,9 +79,9 @@ This tests for:
 should not create new client account 
 ```console
 $ interviewpuzzle tests/test_cases/02-dont-create-new-client.csv
-ERROR: Attempted to postprocess a non existent transaction. (tx = type:Dispute,client:1,tx:1,amount:None,state:None)
-ERROR: Attempted to postprocess a non existent transaction. (tx = type:Resolve,client:1,tx:1,amount:None,state:None)
-ERROR: Attempted to postprocess a non existent transaction. (tx = type:Chargeback,client:1,tx:1,amount:None,state:None)
+ERROR: Attempted to postprocess a non existent transaction. (tx = type:Dispute,client:1,tx:1,amount:None,state:DefaultState)
+ERROR: Attempted to postprocess a non existent transaction. (tx = type:Resolve,client:1,tx:1,amount:None,state:DefaultState)
+ERROR: Attempted to postprocess a non existent transaction. (tx = type:Chargeback,client:1,tx:1,amount:None,state:DefaultState)
 
 ```
 
@@ -137,10 +137,11 @@ This tests for:
 
 ```console 
 $ interviewpuzzle tests/test_cases/05-invalid-chargeback.csv
-ERROR: Attempted to chargeback a transaction which is currently not disputed. (tx = type:Chargeback,client:1,tx:1,amount:None,state:None)
-ERROR: Attempted to chargeback a transaction which is currently not disputed. (tx = type:Chargeback,client:2,tx:2,amount:None,state:None)
+ERROR: Transaction has been chargedback - no further action is possible. (tx = type:Resolve,client:1,tx:1,amount:None,state:DefaultState)
+ERROR: Transaction has been chargedback - no further action is possible. (tx = type:Chargeback,client:1,tx:1,amount:None,state:DefaultState)
+ERROR: Transaction has been chargedback - no further action is possible. (tx = type:Chargeback,client:2,tx:2,amount:None,state:DefaultState)
 client,available,held,total,locked
-1,4.0,0.0,4.0,false
+1,0.0,4.0,4.0,false
 2,4.0,0.0,4.0,false
 
 ```
@@ -151,8 +152,8 @@ This tests for:
 
 ```console 
 $ interviewpuzzle tests/test_cases/06-duplicate-transaction-id.csv
-ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger. (tx = type:Deposit,client:1,tx:1,amount:Some(4.0),state:None)
-ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger. (tx = type:Withdrawal,client:1,tx:1,amount:Some(4.0),state:None)
+ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger. (tx = type:Deposit,client:1,tx:1,amount:Some(4.0),state:DefaultState)
+ERROR: Deposit or Withdrawal transaction with the same ID already exists in the ledger. (tx = type:Withdrawal,client:1,tx:1,amount:Some(4.0),state:DefaultState)
 client,available,held,total,locked
 1,4.0,0.0,4.0,false
 
