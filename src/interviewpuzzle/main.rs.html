@@ -53,6 +53,10 @@
 <span id="52">52</span>
 <span id="53">53</span>
 <span id="54">54</span>
+<span id="55">55</span>
+<span id="56">56</span>
+<span id="57">57</span>
+<span id="58">58</span>
 </pre><pre class="rust"><code><span class="kw">mod</span> <span class="ident">utils</span>; <span class="comment">// importing as a first item to register the macro before everything else</span>
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod</span> <span class="ident">core</span>;
@@ -74,11 +78,11 @@
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">ledger</span> <span class="op">=</span> <span class="ident">Ledger::default</span>();
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">accounts</span> <span class="op">=</span> <span class="ident">Accounts::default</span>();
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">transactions</span> <span class="op">=</span> <span class="ident">get_transactions</span>(<span class="ident">csv_path</span>.<span class="ident">value_of</span>(<span class="string">&quot;csv-path&quot;</span>))<span class="question-mark">?</span>;
-    <span class="kw">for</span> (<span class="ident">_line</span>, <span class="ident">tx</span>) <span class="kw">in</span> <span class="ident">transactions</span>.<span class="ident">deserialize</span>().<span class="ident">enumerate</span>() {
+    <span class="kw">for</span> <span class="ident">tx</span> <span class="kw">in</span> <span class="ident">transactions</span>.<span class="ident">deserialize</span>() {
         <span class="kw">let</span> <span class="ident">tx</span>: <span class="ident">Tx</span><span class="op">&lt;</span><span class="ident">ledger::transaction::Default</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">tx</span><span class="question-mark">?</span>;
         <span class="ident">engine</span>
             .<span class="ident">process_transaction</span>(<span class="ident">tx</span>, <span class="kw-2">&amp;mut</span> <span class="ident">ledger</span>, <span class="kw-2">&amp;mut</span> <span class="ident">accounts</span>)
-            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">eprintln!</span>(<span class="string">&quot;ERROR: {} (tx = {})&quot;</span>, <span class="ident">e</span>.<span class="ident">to_string</span>(), <span class="kw-2">&amp;</span><span class="ident">tx</span>))
+            .<span class="ident">map_err</span>(<span class="op">|</span><span class="ident">e</span><span class="op">|</span> <span class="macro">eprintln!</span>(<span class="string">&quot;{} (tx = {})&quot;</span>, <span class="ident">e</span>.<span class="ident">to_string</span>(), <span class="kw-2">&amp;</span><span class="ident">tx</span>))
             .<span class="ident">ok</span>();
     }
     <span class="kw">let</span> <span class="ident">csv_report</span> <span class="op">=</span> <span class="ident">accounts</span>.<span class="ident">report_accounts_balances</span>()<span class="question-mark">?</span>;
@@ -86,6 +90,7 @@
     <span class="prelude-val">Ok</span>(())
 }
 
+<span class="doccomment">/// `stdin`, parsed with `clap`</span>
 <span class="kw">fn</span> <span class="ident">input</span>() -&gt; <span class="ident">ArgMatches</span> {
     <span class="ident">clap::Command::new</span>(<span class="string">&quot;interviewpuzzle&quot;</span>)
         .<span class="ident">arg_required_else_help</span>(<span class="bool-val">true</span>)
@@ -97,6 +102,8 @@
         .<span class="ident">get_matches</span>()
 }
 
+<span class="doccomment">/// Returns a type with `.deserialized()` method attached to it, which produces</span>
+<span class="doccomment">/// an iterator of incoming transactions</span>
 <span class="kw">fn</span> <span class="ident">get_transactions</span>(<span class="ident">csv_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span>) -&gt; <span class="ident">csv::Result</span><span class="op">&lt;</span><span class="ident">Reader</span><span class="op">&lt;</span><span class="ident">File</span><span class="op">&gt;</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">transactions</span> <span class="op">=</span> <span class="ident">ReaderBuilder::new</span>()
         .<span class="ident">trim</span>(<span class="ident">Trim::All</span>)
@@ -104,6 +111,7 @@
     <span class="prelude-val">Ok</span>(<span class="ident">transactions</span>)
 }
 
+<span class="doccomment">/// `stdout`, but with a prettier name</span>
 <span class="kw">fn</span> <span class="ident">output</span>(<span class="ident">csv</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) {
     <span class="macro">print!</span>(<span class="string">&quot;{}&quot;</span>, <span class="ident">csv</span>);
 }

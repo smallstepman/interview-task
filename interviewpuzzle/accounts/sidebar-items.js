@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["round",""]],"struct":[["AccountLocked",""],["Accounts",""],["Client",""],["NotEnoughFunds",""]],"type":[["ClientId",""],["ClientResult",""]]});
+initSidebarItems({"struct":[["AccountLocked","ERROR: Unable to modify locked account."],["Accounts","Storage for client’s accounts. Maps between client ID and their account."],["Client","A single client’s account"],["NotEnoughFunds","ERROR: Not enough funds in client’s account."]],"type":[["ClientId",""],["ClientResult",""]]});
