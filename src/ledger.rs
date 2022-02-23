@@ -119,8 +119,14 @@ impl DefaultState for Tx<transaction::Default> {
     }
     fn dispute(self) -> Tx<Disputed> {
         Tx::<Disputed> {
+            // repetition easliy avoidable with `..self`
+            // but will have to wait once this is stable
+            // https://github.com/rust-lang/rust/issues/86555
             state: Disputed,
-            ..self
+            amount: self.amount,
+            client_id: self.client_id,
+            id: self.id,
+            tx_type: self.tx_type,
         }
     }
 }
@@ -129,13 +135,19 @@ impl DisputedState for Tx<Disputed> {
     fn resolve(self) -> Tx<transaction::Default> {
         Tx::<Default> {
             state: Default,
-            ..self
+            amount: self.amount,
+            client_id: self.client_id,
+            id: self.id,
+            tx_type: self.tx_type,
         }
     }
     fn chargeback(self) -> Tx<Chargebacked> {
         Tx::<Chargebacked> {
             state: Chargebacked,
-            ..self
+            amount: self.amount,
+            client_id: self.client_id,
+            id: self.id,
+            tx_type: self.tx_type,
         }
     }
 }

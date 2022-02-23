@@ -1,0 +1,43 @@
+name: build, test, and deploy docs to GitHub Pages
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: cargo build
+        run: cargo build
+        
+      - name: cargo test
+        run: cargo test
+        
+  build-docs:
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+          components: rustfmt, rust-src
+
+      - name: Build Documentation
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --all --no-deps
+
+      - name: deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4.2.5
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: target/doc # The folder the action should deploy.
