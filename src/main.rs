@@ -1,3 +1,6 @@
+#![feature(type_changing_struct_update)]
+#![allow(incomplete_features)]
+
 mod utils; // importing as a first item to register the macro before everything else
 
 pub(crate) mod core;
