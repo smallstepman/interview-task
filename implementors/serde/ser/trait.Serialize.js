@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["interviewpuzzle"] = [{"text":"impl <a class=\"trait\" href=\"https://docs.rs/serde/1.0.136/serde/ser/trait.Serialize.html\" title=\"trait serde::ser::Serialize\">Serialize</a> for <a class=\"struct\" href=\"interviewpuzzle/accounts/struct.Client.html\" title=\"struct interviewpuzzle::accounts::Client\">Client</a>","synthetic":false,"types":["interviewpuzzle::accounts::Client"]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
