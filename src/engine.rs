@@ -1,57 +1,69 @@
-use crate::core::{Accounts, Ledger, Tx, TxType};
+use crate::core::{
+    transaction::{self, Chargebacked, DefaultState, Disputed, DisputedState, Tx, TxState},
+    Accounts, Ledger, TxType,
+};
 use crate::utils::build_custom_error;
-use std::{error::Error, fmt};
+use std::{any::Any, error::Error, fmt};
 
 #[derive(Default)]
 pub(crate) struct PaymentEngine;
 
 impl PaymentEngine {
-    pub(crate) fn process_transaction(
+    pub(crate) fn process_transaction<
+        S: Any + TxState, // , OtherState: Clone + Copy
+    >(
         &mut self,
-        tx: &Tx,
+        incoming_tx: Tx<S>,
         ledger: &mut Ledger,
         clients: &mut Accounts,
     ) -> Result<(), Box<dyn Error>> {
-        if let Some(existing_tx) = ledger.get_transaction(&tx) {
-            match tx.tx_type {
-                TxType::Dispute => {
-                    existing_tx.dispute()?;
-                    clients
-                        .get_client(tx.client_id)
-                        .hold(existing_tx.amount.unwrap())?;
-                }
-                TxType::Resolve => {
-                    existing_tx.resolve()?;
-                    clients
-                        .get_client(tx.client_id)
-                        .resolve(existing_tx.amount.unwrap())?;
-                }
-                TxType::Chargeback => {
-                    existing_tx.chargeback()?;
-                    let client = clients.get_client(tx.client_id);
-                    client.freeze();
-                    client.chargeback(existing_tx.amount.unwrap())?;
-                }
-                TxType::Withdrawal | TxType::Deposit => return Err(Box::new(DuplicateTransaction)),
+        if let Some(referenced_tx) = ledger.get_transaction(&incoming_tx) {
+            if incoming_tx.tx_type == TxType::Deposit || incoming_tx.tx_type == TxType::Withdrawal {
+                return Err(Box::new(DuplicateTransaction));
             }
+            if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<transaction::Default>>() {
+                if incoming_tx.tx_type == TxType::Dispute {
+                    let client = clients.get_client(referenced_tx.client_id);
+                    if client.id == incoming_tx.client_id {
+                        let _ = referenced_tx.dispute();
+                        client.hold(referenced_tx.amount.unwrap())?;
+                    }
+                } else {
+                    return Err(Box::new(InvalidRequestError));
+                }
+            } else if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<Disputed>>() {
+                let client = clients.get_client(referenced_tx.client_id);
+                if client.id != incoming_tx.client_id {
+                    return Err(Box::new(InvalidRequestError));
+                }
+                match incoming_tx.tx_type {
+                    TxType::Resolve => {
+                        let _ = referenced_tx.resolve();
+                        client.resolve(referenced_tx.amount.unwrap())?;
+                    }
+                    TxType::Chargeback => {
+                        let _ = referenced_tx.chargeback();
+                        client.freeze();
+                        client.chargeback(referenced_tx.amount.unwrap())?;
+                    }
+                    _ => return Err(Box::new(InvalidRequestError)),
+                }
+            } else if let Some(_referenced_tx) = referenced_tx.downcast_mut::<Tx<Chargebacked>>() {
+                return Err(Box::new(ChargedbackTransacionError));
+            }
+        } else if incoming_tx.tx_type == TxType::Chargeback
+            || incoming_tx.tx_type == TxType::Resolve
+            || incoming_tx.tx_type == TxType::Dispute
+        {
+            return Err(Box::new(NonExistingTransaction));
         } else {
-            match tx.tx_type {
-                TxType::Deposit => {
-                    clients
-                        .get_client(tx.client_id)
-                        .deposit(tx.amount.unwrap())?;
-                    ledger.insert_transaction(&tx);
-                }
-                TxType::Withdrawal => {
-                    clients
-                        .get_client(tx.client_id)
-                        .withdrawal(tx.amount.unwrap())?;
-                    ledger.insert_transaction(&tx)
-                }
-                TxType::Chargeback | TxType::Resolve | TxType::Dispute => {
-                    return Err(Box::new(NonExistingTransaction))
-                }
+            let client = clients.get_client(incoming_tx.client_id);
+            if incoming_tx.tx_type == TxType::Deposit {
+                client.deposit(incoming_tx.amount.unwrap())?;
+            } else if incoming_tx.tx_type == TxType::Withdrawal {
+                client.withdrawal(incoming_tx.amount.unwrap())?;
             }
+            ledger.insert_transaction(incoming_tx);
         }
         Ok(())
     }
@@ -64,6 +76,14 @@ build_custom_error!(
 build_custom_error!(
     NonExistingTransaction,
     "Attempted to postprocess a non existent transaction."
+);
+build_custom_error!(
+    ChargedbackTransacionError,
+    "Transaction has been chargedback - no further action is possible."
+);
+build_custom_error!(
+    InvalidRequestError,
+    "Transaction has been chargedback - no further action is possible."
 );
 
 #[cfg(test)]
