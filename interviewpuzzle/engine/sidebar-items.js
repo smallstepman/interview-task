@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["DuplicateTransaction",""],["NonExistingTransaction",""],["PaymentEngine",""]]});
+initSidebarItems({"struct":[["ChargedbackTransacionError",""],["DuplicateTransaction",""],["InvalidRequestError",""],["NonExistingTransaction",""],["PaymentEngine",""]]});

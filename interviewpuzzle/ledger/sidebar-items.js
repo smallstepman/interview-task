@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["TxState",""],["TxType",""]],"fn":[["deserialize_decimal",""]],"struct":[["IrreversableTransaction",""],["Ledger",""],["Tx",""],["UndisputableTransaction",""],["UnresolvableTransaction",""]],"type":[["TransactionId",""]]});
+initSidebarItems({"enum":[["TxType",""]],"mod":[["transaction",""]],"struct":[["IrreversableTransaction",""],["Ledger",""],["UndisputableTransaction",""],["UnresolvableTransaction",""]],"type":[["BoxedTransaction",""],["TransactionId",""]]});
