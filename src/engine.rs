@@ -1,6 +1,6 @@
 use crate::core::{
-    Accounts, Chargebacked, Default, DefaultState, Disputed, DisputedState, Ledger, Tx, TxState,
-    TxType,
+    transaction::{self, Chargebacked, DefaultState, Disputed, DisputedState, Tx, TxState},
+    Accounts, Ledger, TxType,
 };
 use crate::utils::build_custom_error;
 use std::{any::Any, error::Error, fmt};
@@ -21,7 +21,7 @@ impl PaymentEngine {
             if incoming_tx.tx_type == TxType::Deposit || incoming_tx.tx_type == TxType::Withdrawal {
                 return Err(Box::new(DuplicateTransaction));
             }
-            if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<Default>>() {
+            if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<transaction::Default>>() {
                 if incoming_tx.tx_type == TxType::Dispute {
                     let client = clients.get_client(referenced_tx.client_id);
                     if client.id == incoming_tx.client_id {
