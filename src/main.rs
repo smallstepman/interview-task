@@ -1,5 +1,6 @@
 #![feature(type_changing_struct_update)]
-#![allow(incomplete_features, dead_code, unused_variables, unused_imports)]
+#![allow(incomplete_features)]
+
 mod utils; // importing as a first item to register the macro before everything else
 
 pub(crate) mod core;
@@ -21,8 +22,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut ledger = Ledger::default();
     let mut accounts = Accounts::default();
     let mut transactions = get_transactions(csv_path.value_of("csv-path"))?;
-    for (line, tx) in transactions.deserialize().enumerate() {
-        let tx: Tx<ledger::DefaultState> = tx?;
+    for (_line, tx) in transactions.deserialize().enumerate() {
+        let tx: Tx<ledger::transaction::Default> = tx?;
         engine
             .process_transaction(tx, &mut ledger, &mut accounts)
             .map_err(|e| eprintln!("ERROR: {} (tx = {})", e.to_string(), &tx))

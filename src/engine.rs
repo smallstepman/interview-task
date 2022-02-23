@@ -1,6 +1,7 @@
-use crate::accounts::Client;
-use crate::core::{Accounts, Ledger, Tx, TxType};
-use crate::ledger::{ChargebackedState, DefaultState, DisputedState};
+use crate::core::{
+    Accounts, Chargebacked, Default, DefaultState, Disputed, DisputedState, Ledger, Tx, TxState,
+    TxType,
+};
 use crate::utils::build_custom_error;
 use std::{any::Any, error::Error, fmt};
 
@@ -9,7 +10,7 @@ pub(crate) struct PaymentEngine;
 
 impl PaymentEngine {
     pub(crate) fn process_transaction<
-        S: Clone + Copy + Any, // , OtherState: Clone + Copy
+        S: Any + TxState, // , OtherState: Clone + Copy
     >(
         &mut self,
         incoming_tx: Tx<S>,
@@ -20,36 +21,34 @@ impl PaymentEngine {
             if incoming_tx.tx_type == TxType::Deposit || incoming_tx.tx_type == TxType::Withdrawal {
                 return Err(Box::new(DuplicateTransaction));
             }
-            if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<DefaultState>>() {
+            if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<Default>>() {
                 if incoming_tx.tx_type == TxType::Dispute {
                     let client = clients.get_client(referenced_tx.client_id);
                     if client.id == incoming_tx.client_id {
-                        referenced_tx.dispute()?;
+                        let _ = referenced_tx.dispute();
                         client.hold(referenced_tx.amount.unwrap())?;
                     }
                 } else {
                     return Err(Box::new(InvalidRequestError));
                 }
-            } else if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<DisputedState>>() {
+            } else if let Some(referenced_tx) = referenced_tx.downcast_mut::<Tx<Disputed>>() {
                 let client = clients.get_client(referenced_tx.client_id);
                 if client.id != incoming_tx.client_id {
                     return Err(Box::new(InvalidRequestError));
                 }
                 match incoming_tx.tx_type {
                     TxType::Resolve => {
-                        referenced_tx.resovle();
+                        let _ = referenced_tx.resolve();
                         client.resolve(referenced_tx.amount.unwrap())?;
                     }
                     TxType::Chargeback => {
-                        referenced_tx.chargeback();
+                        let _ = referenced_tx.chargeback();
                         client.freeze();
                         client.chargeback(referenced_tx.amount.unwrap())?;
                     }
                     _ => return Err(Box::new(InvalidRequestError)),
                 }
-            } else if let Some(referenced_tx) =
-                referenced_tx.downcast_mut::<Tx<ChargebackedState>>()
-            {
+            } else if let Some(_referenced_tx) = referenced_tx.downcast_mut::<Tx<Chargebacked>>() {
                 return Err(Box::new(ChargedbackTransacionError));
             }
         } else if incoming_tx.tx_type == TxType::Chargeback
